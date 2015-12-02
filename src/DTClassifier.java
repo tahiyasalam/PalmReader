@@ -12,17 +12,25 @@ public class DTClassifier extends Classifier {
 
 	public class featureValue {
 		private String name;
+		TreeMap<String, Integer> classVal = new TreeMap <String, Integer>(); //create a mapping for each feature value to possible classifications
 		public featureValue(String name) {
 			this.name = name; //get the name of the feature name ie: private, self-employed, federal gov't, etc...
-			TreeMap<String, Integer> classVal = new TreeMap <String, Integer>(); //create a mapping for each feature value to possible classifications
 			for (String s : outputclass) {
 				classVal.put(s, 0); //initialize all values to zero to begin
 			}
 		}
 		public String toString() {
-			return this.name;
+			return this.name + " " +this.classVal.toString();
 		}
 
+		public boolean match(String name) {
+			if (this.name.equals(name)) {
+				return true;
+			}
+			else{
+				return false;
+			}
+		}
 	}
 
 	public DTClassifier(String namesFilepath) {
@@ -63,28 +71,50 @@ public class DTClassifier extends Classifier {
 
 	@Override
 	public void train(String trainingDataFilpath) {
-		ArrayList<ArrayList<String>> trainingList = new ArrayList<ArrayList<String>>();	
+		//hashmap to store the count of output values to their number of occurences
+		TreeMap<String, Integer> outputCount = new TreeMap<String, Integer>();
 		try {
 			BufferedReader reader = new BufferedReader(new FileReader(trainingDataFilpath));
 			String line;
 
 			while ((line = reader.readLine()) != null) {
-				if (line.trim().isEmpty()) //ignore blank lines
+				while (line.trim().isEmpty()) //ignore blank lines
 					line = reader.readLine();
 				String arr[] = line.split("[\\s]+");
+				int l = arr.length;
+				if (outputCount.containsKey(arr[l-1])){
+					int old = outputCount.get(arr[l-1]);
+					outputCount.put(arr[l-1], old+1);
+				}
+				else{
+					outputCount.put(arr[l-1], 1);
+				}
 				ArrayList<String> singleperson = new ArrayList<String>();
 				for (int i = 0; i < arr.length-1; i++) {
 					if(features.get(featureToIndex[i]).get(0).toString().equals("numeric") && features.get(featureToIndex[i]).size() == 1) { //do something different if feature is numeric value
 						System.out.println(featureToIndex[i]);
 					}
 					else { //tally up features
-						features.get(featureToIndex[i]);
+						//iterate through feature values to find the one with the matching name
+						//increment the count according to the output for the feature value in this instance
+						for (int j = 0; j < features.get(featureToIndex[i]).size(); j ++){
+							if (features.get(featureToIndex[i]).get(j).match(arr[i])){
+								int old_val = features.get(featureToIndex[i]).get(j).classVal.get(arr[arr.length-1]);
+								features.get(featureToIndex[i]).get(j).classVal.put(arr[arr.length-1], old_val+1);
+							}
+						}
 					}
-				//	singleperson.add(arr[i]);
 				}
-	//			trainingList.add(singleperson); //contains all information for single person from census data
 			}
-
+			//get the Entropy of the whole set
+			double tot_ent = entropy(outputCount);
+			double tot_size = 0;
+			for(Integer i : outputCount.values()){
+				tot_size += i;
+			}
+			
+			for(int i = 0; i < featureToIndex.length; i++)
+				System.out.println(featureToIndex[i] + " " + gain(features, (String)featureToIndex[i], tot_ent, tot_size));
 
 			reader.close();
 		}
@@ -109,29 +139,35 @@ public class DTClassifier extends Classifier {
 		return this.features;
 	}
 
-	public double gain(ArrayList<ArrayList<String>>listOfLists, String feature) {
-		double entropy_s = entropy(listOfLists);
-
-
-		return 0;
+	public double gain(LinkedHashMap<String, ArrayList<featureValue>> s, String feature, double tot_ent, double size) {
+		double entropy_v = 0;
+		double v_mag = 0;
+		double sum = 0;
+		for(featureValue f: s.get(feature)){
+			entropy_v = entropy(f.classVal);
+			for(Integer i : f.classVal.values()){
+				v_mag += i;
+			}
+			sum = sum + (v_mag/size)*entropy_v;
+			v_mag = 0; //reset v_mag for next iteration
+		}
+		
+		return tot_ent-sum;
 	}
 
-	public double entropy(ArrayList<ArrayList<String>>listOfLists) {
-		double p_plus = 0;
-		double p_neg = 0;
-		for (int i = 0; i < listOfLists.size(); i++) {
-			if (listOfLists.get(i).get(listOfLists.get(i).size()-1).equals("true")) {
-				p_plus += 1;
-			}
-			else
-				p_neg += 1;
+	public double entropy(TreeMap<String, Integer> s) {
+		double sum = 0;
+		for (Integer b : s.values()){
+			sum += b;
 		}
-
-		double p_total = p_plus + p_neg;
-		p_plus = (p_plus/p_total);
-		p_neg = (p_neg/p_total);
-
-		return -1*(p_plus)*Math.log(p_plus)/Math.log(2)-(p_neg)*Math.log(p_neg)/Math.log(2);
+		double entropy_num = 0;
+		for (String c : s.keySet()){
+			double count = s.get(c);
+			if (count != 0)
+				entropy_num += (-1)*(count/sum)*Math.log(count/sum)/Math.log(2);
+		}
+		
+		return entropy_num;
 	}
 
 
