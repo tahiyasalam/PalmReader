@@ -74,11 +74,15 @@ public class DTClassifier extends Classifier {
 				String arr[] = line.split("[\\s]+");
 				ArrayList<String> singleperson = new ArrayList<String>();
 				for (int i = 0; i < arr.length-1; i++) {
-					if(features.get(featureToIndex[i]).get(0).toString().equals("numeric") && features.get(featureToIndex[i]).size() == 1)
+					if(features.get(featureToIndex[i]).get(0).toString().equals("numeric") && features.get(featureToIndex[i]).size() == 1) { //do something different if feature is numeric value
 						System.out.println(featureToIndex[i]);
-					singleperson.add(arr[i]);
+					}
+					else { //tally up features
+						features.get(featureToIndex[i]);
+					}
+				//	singleperson.add(arr[i]);
 				}
-				trainingList.add(singleperson); //contains all information for single person from census data
+	//			trainingList.add(singleperson); //contains all information for single person from census data
 			}
 
 
@@ -89,14 +93,6 @@ public class DTClassifier extends Classifier {
 			e.printStackTrace();
 		}
 
-//		for(String s: this.features.keySet()) {
-//			if(features.get(s).get(0).equals("numeric") && features.get(s).size() == 1) { //do something different if feature is numeric value
-//				//System.out.println(s);
-//			}
-//			else { //keep track of feature and output class
-//
-//			}
-//		}
 	}
 
 	@Override
