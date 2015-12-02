@@ -65,6 +65,7 @@ public class Classifier2 extends Classifier {
 				testData.add(entry);
 			}
 			//get the Entropy of the whole set
+			System.out.println("ready");
 			double tot_ent = entropy(testData);
 			
 			System.out.println(tot_ent);

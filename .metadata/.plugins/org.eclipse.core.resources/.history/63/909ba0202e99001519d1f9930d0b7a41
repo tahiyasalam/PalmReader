@@ -65,6 +65,7 @@ public class Classifier2 extends Classifier {
 				testData.add(entry);
 			}
 			//get the Entropy of the whole set
+			System.out.println("ready");
 			double tot_ent = entropy(testData);
 			
 			System.out.println(tot_ent);
@@ -92,7 +93,7 @@ public class Classifier2 extends Classifier {
 		return this.features;
 	}*/
 
-	public double gain(ArrayList<ArrayList<String>> s, String feature, double tot_ent, double size) {
+	public double gain(ArrayList<ArrayList<String>> s, String feature, TreeMap<String, String[]> featureValues, double tot_ent, double size) {
 		double total_ent = entropy(s);
 		double sum = 0; //the accumulated gain
 		int index = featureToIndex.indexOf(feature);//index of this feature for quick lookup in the test data
