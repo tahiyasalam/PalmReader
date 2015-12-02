@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Move element &apos;Classifier2.java&apos; to &apos;PalmReader/src/(default package)&apos;&#x0A;- Original project: &apos;PalmReader&apos;&#x0A;- Destination element: &apos;PalmReader/src/(default package)&apos;&#x0A;- Original element: &apos;Classifier2.java&apos;&#x0A;- Update references to refactored element" description="Move file" destination="/src&lt;" element1="Classifier2.java" files="1" flags="589830" folders="0" id="org.eclipse.jdt.ui.move" policy="org.eclipse.jdt.ui.moveResources" qualified="false" references="true" stamp="1449079143321" units="0" version="1.0"/>
+</session>

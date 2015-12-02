@@ -1,0 +1,155 @@
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.TreeMap;
+import java.util.Arrays;
+
+public class Classifier2 extends Classifier {
+	//All features and their possible values, numeric will only store numeric in the array
+	TreeMap<String, String[]> featureValues= new TreeMap<String, String[]>();
+	ArrayList<String> featureToIndex = new ArrayList<String>();
+	ArrayList<ArrayList<String>> testData = new ArrayList<ArrayList<String>>();
+	ArrayList<String> outputClass = new ArrayList<String>();
+
+
+	public Classifier2(String namesFilepath) {
+		super(namesFilepath);
+
+
+		try {
+			BufferedReader reader = new BufferedReader(new FileReader(namesFilepath));
+			String line;
+
+			if((line = reader.readLine()) != null) { //get first line for output classes
+				String[] entry = line.split("[\\s]+");
+				for (String s: entry){
+					outputClass.add(s); //store all possible output classes
+				}
+			}
+
+			while ((line = reader.readLine()) != null) { //get rest of information
+				while (line.trim().isEmpty()){ //ignore blank lines
+					line = reader.readLine();}
+
+				String[] entry = line.split("[\\s]+");
+				String feature = entry[0];
+				featureToIndex.add(feature);
+				String[] values = Arrays.copyOfRange(entry, 1, entry.length);
+				featureValues.put(feature, values);
+			}
+			reader.close();
+		}
+		catch (Exception e){
+			System.err.format("Exception occurred trying to read '%s'.", namesFilepath);
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	public void train(String trainingDataFilpath) {
+		//hashmap to store the count of output values to their number of occurences
+		//TreeMap<String, Integer> outputCount = new TreeMap<String, Integer>();
+		try {
+			BufferedReader reader = new BufferedReader(new FileReader(trainingDataFilpath));
+			String line;
+			while ((line = reader.readLine()) != null) {
+				while (line.trim().isEmpty()) //ignore blank lines
+					line = reader.readLine();
+				String arr[] = line.split("[\\s]+");
+				ArrayList<String> entry = new ArrayList<String>();
+			    for(String s : arr){
+			    	entry.add(s);
+			    }
+				testData.add(entry);
+			}
+			//get the Entropy of the whole set
+			System.out.println("ready");
+			double tot_ent = entropy(testData);
+			
+			System.out.println(tot_ent);
+
+			reader.close();
+		}
+		catch (Exception e){
+			System.err.format("Exception occurred trying to read '%s'.", trainingDataFilpath);
+			e.printStackTrace();
+		}
+
+	}
+
+	@Override
+	public void makePredictions(String testDataFilepath) {
+		// TODO Auto-generated method stub
+
+	}
+
+	/*public ArrayList<String> getOutputClass() {
+		return this.outputclass;
+	}
+
+	public HashMap<String, ArrayList<featureValue>> getFeatures() {
+		return this.features;
+	}*/
+
+	public double gain(ArrayList<ArrayList<String>> s, String feature, TreeMap<String, String[]> featureValues, double tot_ent, double size) {
+		double total_ent = entropy(s);
+		double sum = 0; //the accumulated gain
+		int index = featureToIndex.indexOf(feature);//index of this feature for quick lookup in the test data
+		ArrayList<ArrayList<String>> subset_v = new ArrayList<ArrayList<String>>();
+		//for every value of the specified feature
+		
+		for(String value : featureValues.get(feature)){
+			//go through every entry in the test data and check the value of feature
+			double entropy_v = 0;
+			double v_mag = 0;
+			subset_v.clear(); //start with an empty subset
+			for(ArrayList<String> entry : s){
+				if (entry.get(index).equals(value)){
+					//if there's a match, add the entry to the subset, increment the count
+					subset_v.add(entry);
+					v_mag ++;
+				}
+			}
+			entropy_v = entropy(subset_v);
+			sum += (v_mag/s.size())*entropy_v;
+		}
+		return total_ent - sum;
+	}
+
+	//receives some subset of the test data
+	public double entropy(ArrayList<ArrayList<String>> s) {
+		TreeMap<String, Integer> outputCount = new TreeMap<String, Integer>();
+		int i = 0;
+	    int index = s.get(i).size()-1;
+	    double total_count = s.size();
+	    //get the output count from the given test data
+	    while (i < s.size()){
+	    	String value = s.get(i).get(index);
+	    	if (outputCount.keySet().contains(value)){
+	    		int old_value = outputCount.get(value);
+	    		outputCount.put(value, old_value+1);
+	    	}
+	    	else{
+	    		outputCount.put(value, 1);
+	    	}
+	    	i++;
+	    }
+		
+		double entropy_num = 0;
+		for (String c : outputCount.keySet()){
+			double count = outputCount.get(c);
+			if (count != 0)
+				entropy_num += (-1)*(count/total_count)*Math.log(count/total_count)/Math.log(2);
+		}
+		
+		return entropy_num;
+	}
+
+
+	public static void main(String[]args) {
+		Classifier2 dt = new Classifier2("census.names");
+		dt.train("trainingwheels");
+	}
+}

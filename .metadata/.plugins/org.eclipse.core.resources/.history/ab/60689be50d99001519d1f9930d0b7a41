@@ -1,0 +1,180 @@
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.TreeMap;
+
+public class DTClassifier extends Classifier {
+	ArrayList<String> outputclass = new ArrayList<String>();
+	LinkedHashMap<String, ArrayList<featureValue>> features = new LinkedHashMap<String, ArrayList<featureValue>>();
+	Object[] featureToIndex;
+
+	public class featureValue {
+		private String name;
+		TreeMap<String, Integer> classVal = new TreeMap <String, Integer>(); //create a mapping for each feature value to possible classifications
+		public featureValue(String name) {
+			this.name = name; //get the name of the feature name ie: private, self-employed, federal gov't, etc...
+			for (String s : outputclass) {
+				classVal.put(s, 0); //initialize all values to zero to begin
+			}
+		}
+		public String toString() {
+			return this.name + " " +this.classVal.toString();
+		}
+
+		public boolean match(String name) {
+			if (this.name.equals(name)) {
+				return true;
+			}
+			else{
+				return false;
+			}
+		}
+	}
+
+	public DTClassifier(String namesFilepath) {
+		super(namesFilepath);
+
+
+		try {
+			BufferedReader reader = new BufferedReader(new FileReader(namesFilepath));
+			String line;
+
+			if((line = reader.readLine()) != null) { //get first line for output classes
+				for (String s : line.split("[\\s]+"))
+					outputclass.add(s); //add all possible output classifications
+			}
+
+			while ((line = reader.readLine()) != null) { //get rest of information
+				if (line.trim().isEmpty()) //ignore blank lines
+					line = reader.readLine();
+
+				String arr[] = line.split("[\\s]+");
+				ArrayList<featureValue> feat_names = new ArrayList<featureValue>();
+				for (int i = 1; i < arr.length; i++) { 
+					featureValue newVal = new featureValue(arr[i]);
+					feat_names.add(newVal); //get possible values of features
+				}
+				features.put(arr[0], feat_names); //add feature name and possible feature values
+			}		
+			
+			featureToIndex = features.keySet().toArray(); //changes key set to array to map indices to features
+			
+			reader.close();
+		}
+		catch (Exception e){
+			System.err.format("Exception occurred trying to read '%s'.", namesFilepath);
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	public void train(String trainingDataFilpath) {
+		//hashmap to store the count of output values to their number of occurences
+		TreeMap<String, Integer> outputCount = new TreeMap<String, Integer>();
+		try {
+			BufferedReader reader = new BufferedReader(new FileReader(trainingDataFilpath));
+			String line;
+
+			while ((line = reader.readLine()) != null) {
+				while (line.trim().isEmpty()) //ignore blank lines
+					line = reader.readLine();
+				String arr[] = line.split("[\\s]+");
+				int l = arr.length;
+				if (outputCount.containsKey(arr[l-1])){
+					int old = outputCount.get(arr[l-1]);
+					outputCount.put(arr[l-1], old+1);
+				}
+				else{
+					outputCount.put(arr[l-1], 1);
+				}
+				ArrayList<String> singleperson = new ArrayList<String>();
+				for (int i = 0; i < arr.length-1; i++) {
+					if(features.get(featureToIndex[i]).get(0).toString().equals("numeric") && features.get(featureToIndex[i]).size() == 1) { //do something different if feature is numeric value
+						System.out.println(featureToIndex[i]);
+					}
+					else { //tally up features
+						//iterate through feature values to find the one with the matching name
+						//increment the count according to the output for the feature value in this instance
+						for (int j = 0; j < features.get(featureToIndex[i]).size(); j ++){
+							if (features.get(featureToIndex[i]).get(j).match(arr[i])){
+								int old_val = features.get(featureToIndex[i]).get(j).classVal.get(arr[arr.length-1]);
+								features.get(featureToIndex[i]).get(j).classVal.put(arr[arr.length-1], old_val+1);
+							}
+						}
+					}
+				}
+			}
+			//get the Entropy of the whole set
+			double tot_ent = entropy(outputCount);
+			double tot_size = 0;
+			for(Integer i : outputCount.values()){
+				tot_size += i;
+			}
+			
+			System.out.println(tot_ent+ " " + tot_size);
+			System.out.println(gain(features, "sex", tot_ent, tot_size));
+			
+
+
+			reader.close();
+		}
+		catch (Exception e){
+			System.err.format("Exception occurred trying to read '%s'.", trainingDataFilpath);
+			e.printStackTrace();
+		}
+
+	}
+
+	@Override
+	public void makePredictions(String testDataFilepath) {
+		// TODO Auto-generated method stub
+
+	}
+
+	public ArrayList<String> getOutputClass() {
+		return this.outputclass;
+	}
+
+	public HashMap<String, ArrayList<featureValue>> getFeatures() {
+		return this.features;
+	}
+
+	public double gain(LinkedHashMap<String, ArrayList<featureValue>> s, String feature, double tot_ent, double size) {
+		double entropy_v = 0;
+		double v_mag = 0;
+		double sum = 0;
+		for(featureValue f: s.get(feature)){
+			entropy_v = entropy(f.classVal);
+			for(Integer i : f.classVal.values()){
+				v_mag += i;
+			}
+			sum = sum + (v_mag/size)*entropy_v;
+			//System.out.println(v_mag+ " "+ size +" " + entropy_v);
+		}
+		
+		return tot_ent-sum;
+	}
+
+	public double entropy(TreeMap<String, Integer> s) {
+		double sum = 0;
+		for (Integer b : s.values()){
+			sum += b;
+		}
+		double entropy_num = 0;
+		for (String c : s.keySet()){
+			double count = s.get(c);
+			System.out.println(count + " "+sum));
+			entropy_num += (-1)*(count/sum)*Math.log(count/sum)/Math.log(2);
+		}
+		
+		return entropy_num;
+	}
+
+
+	public static void main(String[]args) {
+		DTClassifier dt = new DTClassifier("census.names");
+		dt.train("trainingwheels");
+	}
+}
