@@ -67,7 +67,7 @@ public class Classifier2 extends Classifier {
 			//get the Entropy of the whole set
 			double tot_ent = entropy(testData);
 			
-			double occupation_gain = gain(testData, "race");
+			double occupation_gain = gain(testData, "sex");
 			System.out.println(occupation_gain);
 			reader.close();
 		}

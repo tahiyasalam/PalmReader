@@ -67,8 +67,8 @@ public class Classifier2 extends Classifier {
 			//get the Entropy of the whole set
 			double tot_ent = entropy(testData);
 			
-			double occupation_gain = gain(testData, "race");
-			System.out.println(occupation_gain);
+			System.out.println(tot_ent);
+			System.out.println(featureValues.toString());
 			reader.close();
 		}
 		catch (Exception e){
@@ -98,6 +98,7 @@ public class Classifier2 extends Classifier {
 		int index = featureToIndex.indexOf(feature);//index of this feature for quick lookup in the test data
 		ArrayList<ArrayList<String>> subset_v = new ArrayList<ArrayList<String>>();
 		//for every value of the specified feature
+		
 		for(String value : featureValues.get(feature)){
 			//go through every entry in the test data and check the value of feature
 			double entropy_v = 0;
@@ -110,10 +111,9 @@ public class Classifier2 extends Classifier {
 					v_mag ++;
 				}
 			}
-			if(subset_v.size() > 0){ //if the subset is not empty
-				entropy_v = entropy(subset_v);
-				sum += (v_mag/s.size())*entropy_v;
-		}}
+			entropy_v = entropy(subset_v);
+			sum += (v_mag/s.size())*entropy_v;
+		}
 		return total_ent - sum;
 	}
 
