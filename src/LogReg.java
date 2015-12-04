@@ -8,10 +8,12 @@ import java.util.TreeMap;
 public class LogReg extends Classifier {
 	//All features and their possible values, numeric will only store numeric in the array
 	LinkedHashMap<String, ArrayList<String>> featureValues= new LinkedHashMap<String, ArrayList<String>>();
-	ArrayList<String> featureToIndex = new ArrayList<String>();
+	static ArrayList<String> featureToIndex = new ArrayList<String>();
 	static ArrayList<ArrayList<Double>> testData = new ArrayList<ArrayList<Double>>();
 	ArrayList<String> outputClass = new ArrayList<String>();
 	static ArrayList<Integer> y = new ArrayList<Integer>();
+	static ArrayList<Double> theta = new ArrayList<Double>();
+	static double alpha = 0.9;
 
 	public LogReg(String namesFilepath) {
 		super(namesFilepath);
@@ -73,7 +75,7 @@ public class LogReg extends Classifier {
 					y.add(-1);
 			}
 
-			System.out.println(testData.toString());
+//			System.out.println(testData.toString());
 //			System.out.println(y.toString());
 			reader.close();
 		}
@@ -85,8 +87,9 @@ public class LogReg extends Classifier {
 
 	@Override
 	public void makePredictions(String testDataFilepath) {
-		// TODO Auto-generated method stub
-		
+		for(int i = 0; i < theta.size(); i++) {
+			
+		}
 	}
 	
 	public ArrayList<Double> d_theta(ArrayList<Double> theta, ArrayList<ArrayList<Double>> x, ArrayList<Integer> y) {
@@ -96,7 +99,7 @@ public class LogReg extends Classifier {
 			for(int i = 0; i < x.size(); i++) {
 				double sum = 0.0;
 				for(int k = 0; k < theta.size(); k++) {
-					sum += theta.get(k)*x.get(i).get(k);
+					sum += theta.get(k)*sigmoid(x.get(i).get(k));
 				}
 				sum2 += (sum-y.get(i))*x.get(i).get(j);
 			}
@@ -124,23 +127,10 @@ public class LogReg extends Classifier {
 	public static void main(String[] args) {
 		LogReg lr = new LogReg("census.names");
 		lr.train("census2.train");
-		
-		ArrayList<Double> theta = new ArrayList<Double>();
-		theta.add(1.0);
-		theta.add(1.0);
-		theta.add(1.0);
-		theta.add(1.0);
-		theta.add(1.0);
-		theta.add(1.0);
-		theta.add(1.0);
-		theta.add(1.0);
-		theta.add(1.0);
-		theta.add(1.0);
-		theta.add(1.0);
-		theta.add(1.0);
-		theta.add(1.0);
-		theta.add(1.0);
-
+				
+		for(int i = 0; i < featureToIndex.size(); i++) {
+			theta.add(1.0);
+		}
 		
 		System.out.println(lr.d_theta(theta, testData, y).toString());
 	}
